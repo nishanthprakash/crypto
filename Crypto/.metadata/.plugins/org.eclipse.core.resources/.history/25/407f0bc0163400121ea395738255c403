@@ -1,0 +1,206 @@
+import java.io.*;
+import java.math.BigInteger;  
+import java.util.Random; 
+
+
+public class Rebrsa
+{
+ private int bitlength = 3;
+ private Random r;
+ BigInteger p,q,n,d;
+ static BigInteger N,phi;
+ int no=2;
+ 
+ public static BigInteger exp(BigInteger a,BigInteger e) {
+        BigInteger aa = a;
+		BigInteger i=new BigInteger("1");
+		BigInteger ONE  = new BigInteger("1");
+		//System.out.println(i+" "+e);
+        while(i.compareTo(e)<0) {
+            a  =  a.multiply(aa);
+			i=i.add(ONE);
+			//System.out.println(a);
+        } 
+		//
+        return a;
+    }
+    
+ public static BigInteger modexp(BigInteger a,BigInteger e,BigInteger n) {
+        BigInteger aa = a;
+		BigInteger i=new BigInteger("1");
+		BigInteger ONE  = new BigInteger("1");
+		//System.out.println(i+" "+e);
+        while(i.compareTo(e)<0) {
+            a  =  a.multiply(aa).mod(n);
+			i=i.add(ONE);
+			//System.out.println(a);
+        } 
+		//
+        return a;
+    }
+ public Rebrsa()
+ {
+ 	no=2;
+ 	BigInteger e[]= key_gen();
+ 	for( int k=0;k<no;k++)
+ 		System.out.println("e["+k+"]="+e[k]);
+ 	BigInteger m[]=new BigInteger[2];
+ 	
+ 	
+ 	m[0]=new BigInteger("16");
+ 	m[1]=new BigInteger("10");
+ 	
+ 	
+ 	BigInteger c[]=encrypt(m,e);
+ 	System.out.println("Ciphertext");
+ 	for( int k=0;k<no;k++)
+ 		System.out.println("c["+k+"]="+c[k]);
+ 	//	System.out.println(modexp(new BigInteger("5"),new BigInteger("3"),new BigInteger("7")));
+ 	BigInteger mm[]=decrypt(c,e,2);
+ 	System.out.println("Decrypted Plaintext");
+ 	for( int k=0;k<no;k++)
+ 		System.out.println(mm[k]);
+ 	
+ }
+ 
+ 
+    
+    
+ BigInteger [] encrypt(BigInteger m[], BigInteger e[])
+ {
+		BigInteger k[]=new BigInteger[no];
+		for(int i=0;i!=no;i++){
+			 k[i]=modexp(m[i],e[i],N);		
+		}
+		return k;
+}
+
+
+BigInteger [] decrypt(BigInteger c[],  BigInteger e[], int no)
+{
+		BigInteger m[] = new BigInteger[no];
+		BigInteger prode=new BigInteger("1");
+		BigInteger a;
+		BigInteger a0=new BigInteger("1");
+		BigInteger [] alpha=new BigInteger [no];
+		int i=0;
+		while(i!=no)
+			prode=prode.multiply(e[i++]);
+		//System.out.println("prode "+prode);	
+		i=0;
+		while(i!=no){
+			a0=a0.multiply(exp(c[i],prode.divide(e[i])));
+			i++;
+			}
+		
+		
+		System.out.println("a0 "+a0);
+		System.out.println("phi "+phi);
+		//a = a0.modPow(N.modInverse(prode), N);
+		a=exp(a0, prode.modInverse(phi));
+		System.out.println("a "+a);
+		ChineseRemainder cr = new ChineseRemainder();
+                
+                    
+     
+		BigInteger temp[]=new BigInteger[no];
+		for(int ii=0;ii!=no;ii++){
+			for(int j=0;j!=no;j++)
+				temp[j]=(j==ii?new BigInteger("1"):new BigInteger("0"));
+			//System.out.println("temp "+temp[0]+" "+temp[1]);	
+			alpha[ii]= cr.findSolution(temp, e);//chinese_remainder(temp,e,no);
+			//System.out.println("alpha "+alpha[ii]);
+			}
+		
+		
+		for(int ii=0;ii!=no;ii++)
+		{
+			BigInteger tmp = (alpha[ii].subtract(new BigInteger("1"))).divide(e[ii]);
+			m[ii]=exp(a,alpha[ii]).divide(exp(c[ii],tmp));
+			/*m[ii]=a.modPow(alpha[ii],N);
+			System.out.println("int mii === > " + m[ii]);
+			System.out.println("c[ii].modPow(tmp,N)" + c[ii].modPow(tmp,N));
+			m[ii]=m[ii].divide(c[ii].modPow(tmp,N));
+			System.out.println("int2 mii === > " + m[ii]);
+			*/
+			for(int j=0;j!=no;j++)
+			{
+				if(j!=ii)
+					m[ii]=m[ii].divide(exp(c[j],alpha[ii].divide(e[j])));
+			}		
+		m[ii]=m[ii].mod(N);
+		//System.out.println("mii === > " + m[ii]);		
+		}
+		
+		return m;
+}
+
+
+
+ BigInteger[]  key_gen()
+ {
+
+	  BigInteger p,q,n,d;
+
+	   
+		BigInteger e[] = new BigInteger[no];
+		r = new Random();
+	 	p=BigInteger.probablePrime(bitlength, r);
+ 		q=BigInteger.probablePrime(bitlength, r);
+ 		//System.out.println(p +" " +q +" "+ p.compareTo(q));
+ 		while(p.compareTo(q)==0)
+ 			{
+ 			q=BigInteger.probablePrime(bitlength, r);
+ 			//System.out.println("int q "+ q);
+ 			}
+ 		System.out.println("p q "+ p+" "+q);	
+ 		N = p.multiply(q);
+ 		BigInteger ONE  = new BigInteger("1");
+ 		phi =  p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+		System.out.println("N "+N+"phi "+phi);
+		
+	 
+		
+		e[0]=new BigInteger("2");
+		while(true)
+		{	
+				if(phi.gcd(e[0]).compareTo(ONE)!=0 || N.gcd(e[0]).compareTo(ONE)!=0 )
+				{
+						//System.out.println("*******"+ e[0]);
+						e[0]=e[0].add(ONE);
+						//System.out.println("*******"+ e[0]);
+				}
+				else
+					break;
+		}
+		
+		for(int i=1;i!=no;i++)
+		{
+			if(i>0)		
+				e[i]=e[i-1].add(ONE);
+			while(true)
+			{	
+				if(phi.gcd(e[i]).compareTo(ONE)!=0 || N.gcd(e[i]).compareTo(ONE)!=0)
+				{
+						//System.out.println("***VVV*"+ e[i]);
+						e[i]=e[i].add(ONE);
+						//System.out.println("***VV**"+ e[i]);
+				}
+				else
+					break;
+			}
+		}
+		return e;
+}
+public static void main(String[] args) throws IOException{
+
+  Rebrsa r = new Rebrsa();
+
+}			
+			
+			
+			
+			
+			
+}
+

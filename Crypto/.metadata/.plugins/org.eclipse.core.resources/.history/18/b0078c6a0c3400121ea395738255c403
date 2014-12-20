@@ -1,0 +1,161 @@
+import java.io.*;
+import java.math.BigInteger;  
+import java.util.Random; 
+
+
+public class mprime
+{
+ private int bitlength = 8;
+ private Random r;
+ BigInteger d,e;
+ static BigInteger N,phi;
+ int n=3;//no. of primes
+ int no=2;
+ BigInteger dp[] = new BigInteger[n];
+ BigInteger cpdp[][] = new BigInteger[no][n];
+ BigInteger p[] = new BigInteger[n];
+
+ public static BigInteger exp(BigInteger a,BigInteger e) {
+        BigInteger aa = a;
+		BigInteger i=new BigInteger("1");
+		BigInteger ONE  = new BigInteger("1");
+		//System.out.println(i+" "+e);
+        while(i.compareTo(e)<0) {
+            a  =  a.multiply(aa);
+			i=i.add(ONE);
+			//System.out.println(a);
+        } 
+		//
+        return a;
+    }
+    
+ public static BigInteger modexp(BigInteger a,BigInteger e,BigInteger n) {
+        BigInteger aa = a;
+		BigInteger i=new BigInteger("1");
+		BigInteger ONE  = new BigInteger("1");
+		//System.out.println(i+" "+e);
+        while(i.compareTo(e)<0) {
+            a  =  a.multiply(aa).mod(n);
+			i=i.add(ONE);
+			//System.out.println(a);
+        } 
+		//
+        return a;
+    }
+ public mprime()
+ {
+ 	no=2;
+ 	//BigInteger rs[]= key_gen(no);
+ 	
+ 	BigInteger m[]=new BigInteger[2];
+ 	m[0]=new BigInteger("7");
+ 	m[1]=new BigInteger("9");
+ 	key_gen();
+ 	BigInteger c[]=encrypt(m,2);
+ 	for( int k=0;k<no;k++)
+ 		System.out.println(c[k]);
+ 	//	System.out.println(modexp(new BigInteger("5"),new BigInteger("3"),new BigInteger("7")));
+ 	BigInteger mm[]=decrypt(c,2);
+ 	for( int k=0;k<no;k++)
+ 		System.out.println(mm[k]);
+ 	
+ }
+ 
+ 
+    
+    
+ BigInteger [] encrypt(BigInteger m[], int no)
+ {
+		System.out.println("e"+e); 
+		BigInteger k[]=new BigInteger[no];
+		for(int i=0;i!=no;i++){
+			 k[i]=m[i].modPow(e,N);		
+		}
+		return k;
+}
+
+
+BigInteger [] decrypt(BigInteger c[],int no)
+{
+		BigInteger m[] = new BigInteger[no];
+		for(int i=0;i!=n;i++){
+			for(int k=0;k!=no;k++)
+			{
+				cpdp[i][k]=exp(c[i],(dp[k]));
+			
+				System.out.println(" cpdp[j] : " + cpdp[k]);
+				
+			}
+			ChineseRemainder cr = new ChineseRemainder();
+           
+			m[i] = cr.findSolution(cpdp[i],p);
+			
+		}
+    return m;
+}
+
+
+
+void key_gen()
+ {
+	 	
+		r = new Random();
+		BigInteger ONE  = new BigInteger("1");
+		for(int i=0;i!=n;i++){
+			p[i]=BigInteger.probablePrime(bitlength, r);
+				if(i>0)
+					while(p[i].compareTo(p[i-1])<=0){
+						p[i]=BigInteger.probablePrime(bitlength, r);
+						System.out.println(p[i]+"chks");}
+
+			System.out.println(p[i]+"hits");	
+		}
+		//System.out.println(p +" " +q +" "+ p.compareTo(q));
+		
+		N = BigInteger.ONE;
+		for(int i=0;i!=n;i++)
+			N = p[i].multiply(N);
+
+		phi = BigInteger.ONE;
+		for(int i=0;i!=n;i++)
+			phi = (p[i].subtract(BigInteger.ONE)).multiply(phi);
+		
+		
+ 		System.out.println(N+" "+phi);
+		
+		BigInteger r1,r2;
+	   
+		
+		e=new BigInteger("2");
+		while(true)
+		{	
+				if(phi.gcd(e).compareTo(ONE)!=0 )
+				{
+						//System.out.println("*******"+ e[0]);
+						e=e.add(ONE);
+						//System.out.println("*******"+ e[0]);
+				}
+				else
+					break;
+		}
+		System.out.println("*******"+e);
+		System.out.println("*******"+ phi);
+		d = e.modInverse(phi);
+		
+		for(int j=0;j<n;j++)
+	     {
+	         dp[j]=d.mod(p[j].subtract(BigInteger.ONE));
+			 //cout << " dp[j] : " << dp[j] << endl;
+	     }
+		
+		
+}
+public static void main(String[] args) throws IOException{
+
+	mprime r = new mprime();
+
+}			
+			
+			
+}
+
